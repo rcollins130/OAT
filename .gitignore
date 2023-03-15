@@ -1,0 +1,4 @@
+data/*
+rpi/dump1090/dump1090
+*.o
+*.asv
