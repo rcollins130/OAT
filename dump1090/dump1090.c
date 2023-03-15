@@ -1150,7 +1150,7 @@ void displayModesMessage(struct modesMessage *mm) {
     printf(";\n");
 
     /* RAC: PRINT MESSAGE DECODE TIME */
-    print("  DT : %lld\n", mm->decode_time);
+    printf("  DT : %lld\n", mm->decode_time);
 
     if (Modes.raw) {
         fflush(stdout); /* Provide data to the reader ASAP. */
