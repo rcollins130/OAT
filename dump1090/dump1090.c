@@ -230,6 +230,9 @@ struct modesMessage {
 
     /* Fields used by multiple message types. */
     int altitude, unit;
+
+    /* RAC: CUSTOM FIELDS */
+    long long decode_time;
 };
 
 void interactiveShowData(void);
@@ -952,6 +955,9 @@ void decodeModesMessage(struct modesMessage *mm, unsigned char *msg) {
     memcpy(mm->msg,msg,MODES_LONG_MSG_BYTES);
     msg = mm->msg;
 
+    /* RAC: Save decode time*/
+    mm->decode_time = mstime();
+
     /* Get the message type ASAP as other operations depend on this */
     mm->msgtype = msg[0]>>3;    /* Downlink Format */
     mm->msgbits = modesMessageLenByType(mm->msgtype);
@@ -1142,6 +1148,9 @@ void displayModesMessage(struct modesMessage *mm) {
     printf("*");
     for (j = 0; j < mm->msgbits/8; j++) printf("%02x", mm->msg[j]);
     printf(";\n");
+
+    /* RAC: PRINT MESSAGE DECODE TIME */
+    print("  DT : %lld\n", mm->decode_time);
 
     if (Modes.raw) {
         fflush(stdout); /* Provide data to the reader ASAP. */
