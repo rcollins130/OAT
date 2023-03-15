@@ -10,4 +10,4 @@ timestamp(){
 
 mkdir $1
 
-timeout $2 ~git/OAT/rpi/dump1090/dump1090 --raw >> "${1}/$(timestamp)"
+timeout $2 ~/git/OAT/rpi/dump1090/dump1090 --raw >> "${1}/$(timestamp)"
