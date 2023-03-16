@@ -187,6 +187,16 @@ for ii_m=1:height(msg_data)
 end
 
 figure(1); clf; hold on
+home = [37.57429, -122.35051];
+d = shaperead('/Users/robertcollins/Stanford/Stanford_Google_Drive/ME354/Final_Project/maps/ne_10m_bathymetry_all/ne_10m_bathymetry_L_0.shp');
+d_idx = 17;
+plot3(d(d_idx).X, d(d_idx).Y,zeros(size(d(d_idx).X)),'k','LineWidth',3,'DisplayName','Coastline')
+plot3(home(2),home(1), 0, 'r', 'Marker','pentagram','MarkerFaceColor','r','MarkerSize',10, 'DisplayName','Home')
+
+max_lat = -100;
+min_lat = 100;
+max_lon = -200;
+min_lon = 200;
 for ii_t=1:length(tracks)
     if size(tracks(ii_t).pos,1) > 0
         id = tracks(ii_t).id;
@@ -195,63 +205,31 @@ for ii_t=1:length(tracks)
         end
         plot3(tracks(ii_t).pos(:,2), tracks(ii_t).pos(:,1), tracks(ii_t).alt(:,1), '.-','DisplayName',id)
         text(tracks(ii_t).pos(1,2), tracks(ii_t).pos(1,1), tracks(ii_t).alt(1,1), id)
+        
+        if max(tracks(ii_t).pos(:,1)) > max_lat
+            max_lat=max(tracks(ii_t).pos(:,1));
+        end
+        if min(tracks(ii_t).pos(:,1)) < min_lat
+            min_lat=min(tracks(ii_t).pos(:,1));
+        end
+        if max(tracks(ii_t).pos(:,2)) > max_lon
+            max_lon=max(tracks(ii_t).pos(:,2));
+        end
+        if min(tracks(ii_t).pos(:,2)) < min_lon
+            min_lon=max(tracks(ii_t).pos(:,2));
+        end
     end
 end
+xlim([min_lon-1/2, max_lon+1/2])
+ylim([min_lat-1/2, max_lat+1/2])
+xlabel('lon')
+ylabel('lat')
+zlabel('alt, ft')
 legend()
-% % parse messages to structs
-% % TODO: replace this with a table
-% uf_msgs = {};
-% for ii_m=1:length(raw_m)
-%     m_lines = raw_m{ii_m};
-%     msg = struct();
-%     for ii_l=1:length(m_lines)
-%         test_str = m_lines{ii_l};
-%         if extract(test_str, 1) == "*"
-%             msg.code = extractBetween(test_str, "*", ";");
-%         elseif contains(test_str,"bit error fixed")
-%             continue
-%         else
-%             parts = test_str.split(": ");
-%             key = replace(parts(1)," ","");
-%             val = parts(2);
-%             msg = setfield(msg, key, val);
-%         end
-%     end
-%     uf_msgs{length(uf_msgs)+1} = msg;
-% end
-% 
-% % filter by message type
-% %   for now, just use positions
-% ii_locs = 1;
-% ii_vel = 1;
-% ii_id = 1;
-% for ii_m=1:length(uf_msgs)
-%     msg = uf_msgs{ii_m};
-%     if isfield(msg,'DF17') && getfield(msg,'DF17') == "ADS-B message."
-%         if isfield(msg,'ExtendedSquitterName')
-%             if msg.ExtendedSquitterName == "Airborne Position (Baro Altitude)"
-%                 %loc_msgs(ii_locs) = msg;
-%                 loc_msgs(ii_locs) = msg;
-%                 ii_locs = ii_locs+1;
-%             elseif msg.ExtendedSquitterName == "Airborne Velocity"
-%                 vel_msgs(ii_vel) = msg;
-%                 ii_vel = ii_vel+1;
-%             elseif msg.ExtendedSquitterName == "Aircraft Identification and Category"
-%                 
-%             end
-%         end
-%     end
-% end
 
-% match adjacent positions
 
-% 
-% raw_m{ii_m} = extractBetween(test_str, "*", ";");
-% sp = split(test_str," ");
-%         raw_t(ii_m) = sp(end);
-%         ii_m = ii_m + 1;
-% % filter by position
-
+%% CPR HELPER FUNCTIONS
+% Adapted from dump1090 cpp code
 function [lat, lon] = decodeCPR(t0, ll0, t1, ll1)
     % code adapted from dump1090
     
