@@ -27,4 +27,6 @@ gphoto2 \
 gphoto2 \
     -D --recurse \
 
+mv MVI_*.MP4 "${3}.mp4"
+
 popd

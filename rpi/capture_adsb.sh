@@ -10,4 +10,6 @@ timestamp(){
 
 mkdir -p $1
 
-timeout $2 /home/rcollins/git/OAT/rpi/dump1090/dump1090 >> "${1}/$(timestamp)"
+# timeout $2 /home/rcollins/git/OAT/rpi/dump1090/dump1090 >> "${1}/$(timestamp)"
+
+timeout $2 /home/rcollins/git/OAT/rpi/dump1090/dump1090 >> "${1}/${3}.adsb"
