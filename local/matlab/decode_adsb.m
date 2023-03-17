@@ -1,232 +1,220 @@
+%%%
+% 
+% Script for parsing messages from current custom fork of adsb1090. Script
+%   reads raw lines from adsb1090 stdout and forms tracks, performing CPR
+%   location calculations. 
+% Longer term, much of this script should be moved to a custom fork of 
+%   the adsb1090 library. adsb1090 already has good CPR location algos 
+%   (this implementation is copied from there) and can parse many more
+%   types of messages.
+function tracks = parse_adsb1090(lines, par)
+    % Parameters and constants
+    ESQT_POS = 11;
+    ESQT_VEL = 19;
+    ESQT_ID = 4;
 
-clear;
-fname = '/Users/robertcollins/Stanford/Stanford_Google_Drive/ME354/Final_Project/OAT/data/1678870744';
 
-rawdata = readlines(fname);
+    % Group Provided Lines into messages
+    raw_m = {};
+    this_m = {};
+    for ii=1:length(lines)
+        test_str = lines(ii);
+        
+        % on newline, append this_m to raw_m
+        if test_str==""
+            raw_m{length(raw_m)+1} = this_m;
+            this_m = {};
+        else
+            this_m{length(this_m)+1} = test_str;
+        end
+    end
 
-raw_m = {};
-this_m = {};
-
-% group lines into messages
-ii_m = 0;
-for ii=1:length(rawdata)
-    test_str = rawdata(ii);
+    % Drop last message
+    %   Current adsb1090 scripts run adsb1090 for fixed duration, which
+    %   may termiante the program while it is outputting a line. Dropping
+    %   last message prevents partial-message errors. Dropping single 
+    %   message has little cost. 
+    raw_m = raw_m(1:end-1);
     
-    % on newline, append this_m to raw_m
-    if test_str==""
-        raw_m{length(raw_m)+1} = this_m;
-        this_m = {};
-    else
-        this_m{length(this_m)+1} = test_str;
-    end
-
-end
-
-% drop last message (can cause problems)
-raw_m = raw_m(1:end-1);
-
-% parse messages to a table
-%   base fields
-vt_base = ["string","datetime","int8", "string","string"];
-vn_base = ["code", "time", "esqt", "esqn","icao"];
-%   id fields
-vt_id = ["string","string"];
-vn_id = ["AircraftType","Identification"];
-%   position fields
-vt_pos = ["string","string","double","double","double"];
-vn_pos = ["Fflag","Tflag","alt","lat_uc","lon_uc"];
-%   velocity fields
-vt_vel = ["double","double","double","double", ...
-          "double","double","double"];
-vn_vel = ["ew_dir","ew_vel","ns_dir","ns_vel", ...
-          "vr_src","vr_sign","vr_rate"];
-
-vt = [vt_base, vt_id, vt_pos, vt_vel];
-vn = [vn_base, vn_id, vn_pos, vn_vel];
-maket = @(n)(table('Size',[n,length(vt)],'VariableTypes',vt,'VariableNames',vn));
-
-msg_data = maket(0);
-for ii_m = 1:length(raw_m)
-    m_lines = raw_m{ii_m};
-
-    msg_row = maket(1);
-    for ii_l = 1:length(m_lines)
-        test_str = m_lines{ii_l};
-        % extract message code
-        if extract(test_str, 1) == "*"
-            msg_row.code = extractBetween(test_str, "*", ";");
-        % ignore lines without key-val separator
-        elseif ~contains(test_str,": ")
-            continue
-        % extract message key-val pairs
-        else
-            parts = test_str.split(": ");
-            key = replace(parts(1)," ","");
-            val = parts(2);
-
-            % base fields
-            if key=="DT_ms"
-                msg_row.time = datetime(str2double(val)/1000,'ConvertFrom','posixtime');
-            elseif key=="ICAOAddress"
-                msg_row.icao = val;
-            elseif key=="ExtendedSquitterType"
-                msg_row.esqt = str2double(val);
-            elseif key=="ExtendedSquitterName"
-                msg_row.esqn = val;
-
-            % id fields
-            elseif key=="AircraftType"
-                msg_row.AircraftType = val;
-            elseif key=="Identification"
-                msg_row.Identification = val;
-               
-            % position fields
-            elseif key=="Fflag"
-                msg_row.Fflag = val;
-            elseif key=="Tflag"
-                msg_row.Tflag = val;
-            elseif key=="Altitude"
-                msg_row.alt = str2double(replace(val," feet",""));
-            elseif key=="Latitude"
-                msg_row.lat_uc = str2double(replace(val," (not decoded)",""));
-            elseif key=="Longitude"
-                msg_row.lon_uc = str2double(replace(val," (not decoded)",""));
-            
-            % velocity fields
-            elseif key=="EWdirection"
-                msg_row.ew_dir = str2double(val);
-            elseif key=="EWvelocity"
-                msg_row.ew_vel = str2double(val);
-            elseif key=="NSdirection"
-                msg_row.ns_dir = str2double(val);
-            elseif key=="NSvelocity"
-                msg_row.ns_vel = str2double(val);
-            elseif key=="Verticalratesrc"
-                msg_row.vr_src = str2double(val);
-            elseif key=="Verticalratesign"
-                msg_row.vr_sign = str2double(val);
-            elseif key=="Verticalrate"
-                msg_row.vr_rate = str2double(val);
+    % Parse relevant message fields to a Table for easy filtering.
+    %   Only parse id, position, and velocity messages. 
+    % base fields
+    vt_base = ["string","datetime","int8", "string","string"];
+    vn_base = ["code", "time", "esqt", "esqn","icao"];
+    % id fields
+    vt_id = ["string","string"];
+    vn_id = ["AircraftType","Identification"];
+    % position fields
+    vt_pos = ["string","string","double","double","double"];
+    vn_pos = ["Fflag","Tflag","alt","lat_uc","lon_uc"];
+    % velocity fields
+    vt_vel = ["double","double","double","double", ...
+              "double","double","double"];
+    vn_vel = ["ew_dir","ew_vel","ns_dir","ns_vel", ...
+              "vr_src","vr_sign","vr_rate"];
+    
+    % function for generating new message table
+    vt = [vt_base, vt_id, vt_pos, vt_vel];
+    vn = [vn_base, vn_id, vn_pos, vn_vel];
+    maket = @(n)(table('Size',[n,length(vt)],'VariableTypes',vt,'VariableNames',vn));
+    
+    % parse messages
+    msg_data = maket(0);
+    for ii_m = 1:length(raw_m)
+        m_lines = raw_m{ii_m};
+    
+        msg_row = maket(1);
+        for ii_l = 1:length(m_lines)
+            test_str = m_lines{ii_l};
+            % extract message code
+            if extract(test_str, 1) == "*"
+                msg_row.code = extractBetween(test_str, "*", ";");
+            % ignore lines without key-val separator
+            elseif ~contains(test_str,": ")
+                continue
+            % extract message key-val pairs
+            else
+                parts = test_str.split(": ");
+                key = replace(parts(1)," ","");
+                val = parts(2);
+    
+                % base fields
+                if key=="DT_ms"
+                    msg_row.time = datetime(str2double(val)/1000,'ConvertFrom','posixtime');
+                elseif key=="ICAOAddress"
+                    msg_row.icao = val;
+                elseif key=="ExtendedSquitterType"
+                    msg_row.esqt = str2double(val);
+                elseif key=="ExtendedSquitterName"
+                    msg_row.esqn = val;
+    
+                % id fields
+                elseif key=="AircraftType"
+                    msg_row.AircraftType = val;
+                elseif key=="Identification"
+                    msg_row.Identification = val;
+                   
+                % position fields
+                elseif key=="Fflag"
+                    msg_row.Fflag = val;
+                elseif key=="Tflag"
+                    msg_row.Tflag = val;
+                elseif key=="Altitude"
+                    msg_row.alt = str2double(replace(val," feet",""));
+                elseif key=="Latitude"
+                    msg_row.lat_uc = str2double(replace(val," (not decoded)",""));
+                elseif key=="Longitude"
+                    msg_row.lon_uc = str2double(replace(val," (not decoded)",""));
+                
+                % velocity fields
+                elseif key=="EWdirection"
+                    msg_row.ew_dir = str2double(val);
+                elseif key=="EWvelocity"
+                    msg_row.ew_vel = str2double(val);
+                elseif key=="NSdirection"
+                    msg_row.ns_dir = str2double(val);
+                elseif key=="NSvelocity"
+                    msg_row.ns_vel = str2double(val);
+                elseif key=="Verticalratesrc"
+                    msg_row.vr_src = str2double(val);
+                elseif key=="Verticalratesign"
+                    msg_row.vr_sign = str2double(val);
+                elseif key=="Verticalrate"
+                    msg_row.vr_rate = str2double(val);
+                end
             end
         end
-    end
-    % Only pull out position, velocity, id esqts
-    if ~ismissing(msg_row.esqt) && any(msg_row.esqt==[19, 11, 4])
-        msg_data(height(msg_data)+1,:) = msg_row;
-    end
-end
-
-% form aircraft tracks
-tracks = struct("icao",{},"type",{},"id",{}, ...
-    "pos_t", [], "pos",[], "alt_t",[], "alt", [], "vel_t", [], "vel",[], ...
-    "ocpr_t", [], "ocpr_ll",[],"ecpr_t",[],"ecpr_ll",[]);
-for ii_m=1:height(msg_data)
-    msg_row = msg_data(ii_m,:);
-    % determine if we have a track associated with this aircraft
-    if height(tracks)<1
-        tracks(1).icao = msg_row.icao;
-        ii_t = 1;
-    else
-        ii_t = find([tracks.icao]==msg_row.icao,1);
-        if isempty(ii_t)
-            ii_t = size(tracks,2)+1;
-            tracks(ii_t).icao = msg_row.icao;
+        % Only pull out position, velocity, id esqts
+        if ~ismissing(msg_row.esqt) && any(msg_row.esqt==[ESQT_POS, ESQT_ID, ESQT_VEL])
+            msg_data(height(msg_data)+1,:) = msg_row;
         end
     end
 
-    % if position message
-    if msg_row.esqt == 11
-        % Add altitude
-%         tracks(ii_t).alt_t = [tracks(ii_t).alt_t; msg_row.time];
-%         tracks(ii_t).alt = [tracks(ii_t).alt; msg_row.alt];
-        
-        % Update even/odd CPR entries
-        if msg_row.Fflag=="even"
-            tracks(ii_t).ecpr_t = msg_row.time;
-            tracks(ii_t).ecpr_ll = [msg_row.lat_uc, msg_row.lon_uc];
+    % form aircraft tracks
+    tracks = struct( ...
+        "icao",{}, ...
+        "type",{}, ...
+        "id",{}, ...
+        "pos_t", [], ...
+        "pos",[], ...
+        "alt_t",[], ...
+        "alt", [], ...
+        "vel_t", [], ...
+        "vel",[], ...
+        "ocpr_t", [], ...
+        "ocpr_ll",[], ...
+        "ecpr_t",[], ...
+        "ecpr_ll",[]);
+
+    for ii_m=1:height(msg_data)
+        msg_row = msg_data(ii_m,:);
+        % determine if we have a track associated with this aircraft
+        %   if not, add one. 
+        if height(tracks)<1
+            tracks(1).icao = msg_row.icao;
+            ii_t = 1;
         else
-            tracks(ii_t).ocpr_t = msg_row.time;
-            tracks(ii_t).ocpr_ll = [msg_row.lat_uc, msg_row.lon_uc];
-        end
-        
-        % if we have good CPR pair, do positioning
-        if (~isempty(tracks(ii_t).ecpr_t) && ~isempty(tracks(ii_t).ocpr_t) && ...
-            abs(tracks(ii_t).ecpr_t - tracks(ii_t).ocpr_t) <= seconds(10))
-            [lat,lon] = decodeCPR( ...
-                tracks(ii_t).ecpr_t, tracks(ii_t).ecpr_ll, ...
-                tracks(ii_t).ocpr_t, tracks(ii_t).ocpr_ll);
-            
-            if ~isempty([lat,lon])
-                tracks(ii_t).pos_t = [tracks(ii_t).pos_t; msg_row.time];
-                tracks(ii_t).pos = [tracks(ii_t).pos; [lat,lon]];
-                % NOTE: dropping some altitude data here
-                tracks(ii_t).alt_t = [tracks(ii_t).alt_t; msg_row.time];
-                tracks(ii_t).alt = [tracks(ii_t).alt; msg_row.alt];
+            ii_t = find([tracks.icao]==msg_row.icao,1);
+            if isempty(ii_t)
+                ii_t = size(tracks,2)+1;
+                tracks(ii_t).icao = msg_row.icao;
             end
         end
+    
+        % if position message
+        if msg_row.esqt == ESQT_POS
+            % Add altitude
+            %   note- we only add an alt entry when we have good position
+            %   this is not necessary, but makes postproc easier. 
+                % tracks(ii_t).alt_t = [tracks(ii_t).alt_t; msg_row.time];
+                % tracks(ii_t).alt = [tracks(ii_t).alt; msg_row.alt];
 
-    % if id message
-    elseif msg_row.esqt == 4
-        % assign identification to track
-        tracks(ii_t).type = msg_row.AircraftType;
-        tracks(ii_t).id = msg_row.Identification;
-        % TODO: raise warning if type or identification change
-
-    % if velocity message
-    elseif msg_row.esqt == 19
-        % parse velocity to angular
-        ew_vel = (msg_row.ew_dir*2-1)*msg_row.ew_vel;
-        ns_vel = (msg_row.ns_dir*2-1)*msg_row.ns_vel;
-        vr = (msg_row.vr_sign*2-1)*msg_row.vr_rate;
-        heading = atan2(ns_vel, ew_vel);
-        speed = norm([ns_vel, ew_vel]);
-        
-        tracks(ii_t).vel_t = [tracks(ii_t).vel_t; msg_row.time];
-        tracks(ii_t).vel = [tracks(ii_t).vel; [heading, speed, vr]];
+            % Update even/odd CPR entries
+            if msg_row.Fflag=="even"
+                tracks(ii_t).ecpr_t = msg_row.time;
+                tracks(ii_t).ecpr_ll = [msg_row.lat_uc, msg_row.lon_uc];
+            else
+                tracks(ii_t).ocpr_t = msg_row.time;
+                tracks(ii_t).ocpr_ll = [msg_row.lat_uc, msg_row.lon_uc];
+            end
+            
+            % if we have good CPR pair, do CPR positioning
+            if (~isempty(tracks(ii_t).ecpr_t) && ~isempty(tracks(ii_t).ocpr_t) && ...
+                abs(tracks(ii_t).ecpr_t - tracks(ii_t).ocpr_t) <= seconds(10))
+                [lat,lon] = decodeCPR( ...
+                    tracks(ii_t).ecpr_t, tracks(ii_t).ecpr_ll, ...
+                    tracks(ii_t).ocpr_t, tracks(ii_t).ocpr_ll);
+                
+                if ~isempty([lat,lon])
+                    tracks(ii_t).pos_t = [tracks(ii_t).pos_t; msg_row.time];
+                    tracks(ii_t).pos = [tracks(ii_t).pos; [lat,lon]];
+                    % NOTE: only add when CPR position calculated
+                    tracks(ii_t).alt_t = [tracks(ii_t).alt_t; msg_row.time];
+                    tracks(ii_t).alt = [tracks(ii_t).alt; msg_row.alt];
+                end
+            end
+    
+        % if id message
+        elseif msg_row.esqt == ESQT_ID
+            % assign identification to track
+            tracks(ii_t).type = msg_row.AircraftType;
+            tracks(ii_t).id = msg_row.Identification;
+            % TODO: raise warning if type or identification change
+    
+        % if velocity message
+        elseif msg_row.esqt == ESQT_VEL
+            % parse velocity to angular
+            ew_vel = (msg_row.ew_dir*2-1)*msg_row.ew_vel;
+            ns_vel = (msg_row.ns_dir*2-1)*msg_row.ns_vel;
+            vr = (msg_row.vr_sign*2-1)*msg_row.vr_rate;
+            heading = atan2(ns_vel, ew_vel);
+            speed = norm([ns_vel, ew_vel]);
+            
+            tracks(ii_t).vel_t = [tracks(ii_t).vel_t; msg_row.time];
+            tracks(ii_t).vel = [tracks(ii_t).vel; [heading, speed, vr]];
+        end
     end
 end
-
-figure(1); clf; hold on
-home = [37.57429, -122.35051];
-d = shaperead('/Users/robertcollins/Stanford/Stanford_Google_Drive/ME354/Final_Project/maps/ne_10m_bathymetry_all/ne_10m_bathymetry_L_0.shp');
-d_idx = 17;
-plot3(d(d_idx).X, d(d_idx).Y,zeros(size(d(d_idx).X)),'k','LineWidth',3,'DisplayName','Coastline')
-plot3(home(2),home(1), 0, 'r', 'Marker','pentagram','MarkerFaceColor','r','MarkerSize',10, 'DisplayName','Home')
-
-max_lat = -100;
-min_lat = 100;
-max_lon = -200;
-min_lon = 200;
-for ii_t=1:length(tracks)
-    if size(tracks(ii_t).pos,1) > 0
-        id = tracks(ii_t).id;
-        if isempty(id)
-            id = sprintf("icao: %s", tracks(ii_t).icao);
-        end
-        plot3(tracks(ii_t).pos(:,2), tracks(ii_t).pos(:,1), tracks(ii_t).alt(:,1), '.-','DisplayName',id)
-        text(tracks(ii_t).pos(1,2), tracks(ii_t).pos(1,1), tracks(ii_t).alt(1,1), id)
-        
-        if max(tracks(ii_t).pos(:,1)) > max_lat
-            max_lat=max(tracks(ii_t).pos(:,1));
-        end
-        if min(tracks(ii_t).pos(:,1)) < min_lat
-            min_lat=min(tracks(ii_t).pos(:,1));
-        end
-        if max(tracks(ii_t).pos(:,2)) > max_lon
-            max_lon=max(tracks(ii_t).pos(:,2));
-        end
-        if min(tracks(ii_t).pos(:,2)) < min_lon
-            min_lon=max(tracks(ii_t).pos(:,2));
-        end
-    end
-end
-xlim([min_lon-1/2, max_lon+1/2])
-ylim([min_lat-1/2, max_lat+1/2])
-xlabel('lon')
-ylabel('lat')
-zlabel('alt, ft')
-legend()
-
 
 %% CPR HELPER FUNCTIONS
 % Adapted from dump1090 cpp code
