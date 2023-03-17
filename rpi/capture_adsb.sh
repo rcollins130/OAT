@@ -8,6 +8,6 @@ timestamp(){
         date +"%s"
 }
 
-mkdir $1
+mkdir -p $1
 
 timeout $2 /home/rcollins/git/OAT/rpi/dump1090/dump1090 >> "${1}/$(timestamp)"
