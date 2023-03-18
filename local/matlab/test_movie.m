@@ -1,18 +1,61 @@
 
 
 %fname = 'data/movie/20230317_145402.mp4';
-fname = 'data/movie/20230317_145402.mp4';
+% [vid_cdata, t, vidObj] = load_video( ...
+%     fname, ...
+%     [8,18], ...
+%     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
+%     1, ...
+%     1 ...
+%     );
 
-ts = get_mp4_creation_time(fname);
+% fname = 'data/movie/20230317_190123.mp4';
+% [vid_cdata, t, vidObj] = load_video( ...
+%     fname, ...
+%     [8,15], ...
+%     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
+%     1, ...
+%     1 ...
+%     ); 
 
+% fname = 'data/movie/20230317_190613.mp4';
+% [vid_cdata, t, vidObj] = load_video( ...
+%     fname, ...
+%     [8,18], ...
+%     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
+%     1, ...
+%     1 ...
+%     ); 
+
+% fname = 'data/movie/20230317_193236.mp4';
+% [vid_cdata, t, vidObj] = load_video( ...
+%     fname, ...
+%     [8,18], ...
+%     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
+%     1, ...
+%     1 ...
+%     ); 
+
+% fname = 'data/movie/20230317_135249.mp4';
+% [vid_cdata, t, vidObj] = load_video( ...
+%     fname, ...
+%     [8,18], ...
+%     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
+%     1, ...
+%     1 ...
+%     ); 
+
+
+fname = '/Users/robertcollins/Stanford/Stanford_Google_Drive/ME354/Final_Project/test_data/IMG_0459.MOV';
 [vid_cdata, t, vidObj] = load_video( ...
     fname, ...
-    [8,18], ...
+    [15,35], ...
     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
-    1, ...
-    1 ...
-    );
+    2, ...
+    2 ...
+    ); 
 
+ts = get_mp4_creation_time(fname);
 frame_time = ts+t;
 whos vid_cdata
 
@@ -53,12 +96,14 @@ vid_cbin_anycolor = squeeze(any(vid_cbin,3));
 
 % vid_cbin_anytime = squeeze(any(vid_cbin,4));
 
-vid_obin_d = imdilate(vid_cbin_anycolor, strel('sphere',5));
+vid_obin_d = imdilate(vid_cbin_anycolor, strel('sphere',3));
 vid_obin_d_m = mean(vid_obin_d,3);
 
 %vid_obin_d_mbin = imbinarize(vid_obin_d_m);
-vid_obin_d_thold = vid_obin_d_m > 0.5;
+% should scale this based on length/time scale of image compared to jet
+vid_obin_d_thold = vid_obin_d_m > 0.25;
 % note allcolor biases towards white planes
+% NOTE- This caused issues for planes near dusk
 vid_bin = ~vid_obin_d_thold & vid_cbin_allcolor;
 
 % close image, filling holes in middle
@@ -78,7 +123,7 @@ vid_bin = imerode(vid_bin,se);
 %         2 ...
 %         );
 % vid_binary = zeros(size(vid_nbg,[1,2,4]));
-regions = cell(size(vid_cdata,4),1);
+raw_regions = cell(size(vid_cdata,4),1);
 max_area = 0;
 figure(1)
 for ii_frame = 1:size(vid_nbg, 4)
@@ -106,7 +151,7 @@ for ii_frame = 1:size(vid_nbg, 4)
     CC = bwconncomp(vid_bin(:,:,ii_frame));
     %sub_edges = edge(vid_binary(:,:,ii_frame));
     sub_stats = regionprops(CC);
-    regions{ii_frame} = sub_stats;
+    raw_regions{ii_frame} = sub_stats;
     if size(sub_stats,1)>=1
         max_area = max(max_area, max([sub_stats.Area]));
     end
@@ -145,13 +190,13 @@ end
 
 %% region filtering by area
 % filter regions by scale of largest area
-filt_reg = cell(size(regions));
-n_reg = zeros(size(regions));
-for ii_f = 1:size(regions, 1)
-    if size(regions{ii_f},1)>0
-        filt_idx = [regions{ii_f}.Area] > max_area*0.5;
-        filt_reg{ii_f} = regions{ii_f}(filt_idx);
-        n_reg(ii_f)=size(filt_reg{ii_f},1);
+filt_regions = cell(size(raw_regions));
+n_reg = zeros(size(raw_regions));
+for ii_f = 1:size(raw_regions, 1)
+    if size(raw_regions{ii_f},1)>0
+        filt_idx = [raw_regions{ii_f}.Area] > max_area*0.10;
+        filt_regions{ii_f} = raw_regions{ii_f}(filt_idx);
+        n_reg(ii_f)=size(filt_regions{ii_f},1);
     end
 end
 
@@ -170,17 +215,18 @@ end
 %     pause(0.01)
 % end
 
+regions = filt_regions;
+
 %% form tracks
 % may want to add more information to the track struct?
 %   currently it's just a lookup table, and can get info form the
 %   frame/region indicies
 % also, could preallocate?
-tracks = struct('frame_idxs',[],'region_idxs',[],'times',[],'centroids',[]);
+tracks = struct('frame_idxs',[],'region_idxs',[],'times',[],'centroids',[],'bbs',[]);
 next_tid = 1;
 region_tracks = cell(size(regions,1),1);
 % initialize first regions
 region_tracks{1} = zeros(size(regions{1},1));
-
 
 figure(2); clf;
 background = imshow(vid_cdata(:,:,:,1));
@@ -257,6 +303,7 @@ for ii_f = 2:size(regions,1)
                     tracks(tid).region_idxs = ii_lr;
                     tracks(tid).times = frame_time(ii_f-1);
                     tracks(tid).centroids = lr_cent;
+                    tracks(tid).bbs = lr_bb;
                     text(lr_cent(1),lr_cent(2),sprintf("%d",tid));
                     track_traces{tid} = plot(lr_cent(1),lr_cent(2));
                 end
@@ -266,6 +313,7 @@ for ii_f = 2:size(regions,1)
                 tracks(tid).region_idxs = [tracks(tid).region_idxs; ii_tr];
                 tracks(tid).times = [tracks(tid).times; frame_time(ii_f)];
                 tracks(tid).centroids = [tracks(tid).centroids; tr_cent];
+                tracks(tid).bbs = [tracks(tid).bbs; tr_bb];
                 track_traces{tid}.XData = [track_traces{tid}.XData, tr_cent(1)];
                 track_traces{tid}.YData = [track_traces{tid}.YData, tr_cent(2)];
 
@@ -284,6 +332,62 @@ end
 % plot(tracks(tid).centroids(:,1),tracks(tid).centroids(:,2));
 % text(tracks(tid).centroids(1,1),tracks(tid).centroids(1,2),sprintf("%d",tid),'Color','k');
 % end
+
+%% 
+% figure(3); hold on
+% ii_t = 5;
+% padding = [20,10];
+% 
+% for ii_f=1:size(tracks(ii_t).frame_idxs,1)
+%     bb = tracks(ii_t).bbs(ii_f,:);
+%     yidx = max(1,floor(bb(2)-padding(2))):min(size(vid_cdata,1), ceil(bb(2)+bb(4)+padding(2)));
+%     xidx = max(1,floor(bb(1)-padding(1))):min(size(vid_cdata,2), ceil(bb(1)+bb(3)+padding(2)));
+%     imshow(vid_cdata(...
+%         yidx, ...
+%         xidx, ...
+%         :, ...
+%         tracks(ii_t).frame_idxs(ii_f)...
+%     ))
+%     title(string(frame_time(ii_t)))
+%     
+%     pause(0.001)
+% end
+
+%%
+
+ii_max = 1;
+l_max = 0;
+for ii_t=1:size(tracks,2)
+    l = size(tracks(ii_t).frame_idxs,1);
+    if l>l_max
+        ii_max=ii_t;
+        l_max=l;
+    end
+end
+
+figure(3); clf;
+ii_t = ii_max;
+padding = [120,60];
+
+for ii_f=1:size(tracks(ii_t).frame_idxs,1)
+    cent = tracks(ii_t).centroids(ii_f,:);
+    yidx = max(1,floor(cent(2)-padding(2)/2)):min(size(vid_cdata,1), cent(2)+padding(2)/2);
+    xidx = max(1,floor(cent(1)-padding(1)/2)):min(size(vid_cdata,2), cent(1)+padding(1)/2);
+    imshow(vid_cdata(...
+        yidx, ...
+        xidx, ...
+        :, ...
+        tracks(ii_t).frame_idxs(ii_f)...
+    ), 'InitialMagnification',2000,'Interpolation',"bilinear")
+    hold on;
+    title(string(frame_time(tracks(ii_t).frame_idxs(ii_f))))
+    
+    if ii_f<size(tracks(ii_t).frame_idxs,1)
+        pa = frame_time(tracks(ii_t).frame_idxs(ii_f+1))-frame_time(tracks(ii_t).frame_idxs(ii_f));
+        pa = seconds(pa);
+    end
+    pause(pa)
+end
 
 %%
 function ts = get_mp4_creation_time(fname)
