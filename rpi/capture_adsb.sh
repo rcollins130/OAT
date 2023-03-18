@@ -11,5 +11,9 @@ timestamp(){
 mkdir -p $1
 
 # timeout $2 /home/rcollins/git/OAT/rpi/dump1090/dump1090 >> "${1}/$(timestamp)"
-
+oldpid=$(pgrep dump1090)
+if [ -n oldpid ]
+then
+        kill $oldpid
+fi
 timeout $2 /home/rcollins/git/OAT/rpi/dump1090/dump1090 >> "${1}/${3}.adsb"
