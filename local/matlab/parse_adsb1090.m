@@ -13,7 +13,6 @@ function tracks = parse_adsb1090(lines, par)
     ESQT_VEL = 19;
     ESQT_ID = 4;
 
-
     % Group Provided Lines into messages
     raw_m = {};
     this_m = {};
