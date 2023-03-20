@@ -8,6 +8,7 @@ echo "Recording for $2 s"
 
 # gphoto2 --capture-movie 30s --stdout | ffmpeg -i - -y -pix_fmt yuv420p -b:v 4000k -c:v libx264 test.mp4 
 mkdir -p $1
+kill $(pgrep gphoto2)
 
 pushd $1
 gphoto2 \
