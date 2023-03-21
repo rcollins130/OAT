@@ -1,6 +1,6 @@
 
-
-%fname = 'data/movie/20230317_145402.mp4';
+clear 
+% fname = 'data/movie/20230317_145402.mp4';
 % [vid_cdata, t, vidObj] = load_video( ...
 %     fname, ...
 %     [8,18], ...
@@ -46,13 +46,22 @@
 %     ); 
 
 
-fname = '/Users/robertcollins/Stanford/Stanford_Google_Drive/ME354/Final_Project/test_data/IMG_0459.MOV';
+% fname = '/Users/robertcollins/Stanford/Stanford_Google_Drive/ME354/Final_Project/test_data/IMG_0459.MOV';
+% [vid_cdata, t, vidObj] = load_video( ...
+%     fname, ...
+%     [10,35], ...
+%     [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
+%     1, ...
+%     1 ...
+%     ); 
+
+fname = 'data/movie/20230320_203920.mp4';
 [vid_cdata, t, vidObj] = load_video( ...
     fname, ...
-    [15,35], ...
-    [40, 1400; 325, 950],...%[200, 800; 500, 950], ...
-    2, ...
-    2 ...
+    [1,30], ...
+    [94, 1878; 482, 856],...
+    1, ...
+    1 ...
     ); 
 
 ts = get_mp4_creation_time(fname);
@@ -114,6 +123,9 @@ vid_bin = imfill(vid_bin, 'holes');
 vid_bin = imerode(vid_bin,se);
 
 %%
+clear vid_nbg
+
+%%
 % se1 = strel( ...
 %         'disk', ...
 %         5 ...
@@ -123,10 +135,10 @@ vid_bin = imerode(vid_bin,se);
 %         2 ...
 %         );
 % vid_binary = zeros(size(vid_nbg,[1,2,4]));
-raw_regions = cell(size(vid_cdata,4),1);
+raw_regions = cell(size(vid_bin, 3),1);
 max_area = 0;
 figure(1)
-for ii_frame = 1:size(vid_nbg, 4)
+for ii_frame = 1:size(vid_bin, 3)
 %     frame_nbgn = im2gray(vid_nbg(:,:,:,ii_frame));
 % %     frame_bin = imbinarize(frame_nbgn,0.25);
 %     frame_bin = all(c_masks(:,:,:,ii_frame),3);
@@ -222,7 +234,7 @@ regions = filt_regions;
 %   currently it's just a lookup table, and can get info form the
 %   frame/region indicies
 % also, could preallocate?
-tracks = struct('frame_idxs',[],'region_idxs',[],'times',[],'centroids',[],'bbs',[]);
+mov_tracks = struct('frame_idxs',[],'region_idxs',[],'times',[],'centroids',[],'bbs',[]);
 next_tid = 1;
 region_tracks = cell(size(regions,1),1);
 % initialize first regions
@@ -299,21 +311,21 @@ for ii_f = 2:size(regions,1)
                     % this is a new track, assign last region to it
                     tid = next_tid; next_tid = tid+1;
                     region_tracks{ii_f-1}(ii_lr) = tid;
-                    tracks(tid).frame_idxs = ii_f-1;
-                    tracks(tid).region_idxs = ii_lr;
-                    tracks(tid).times = frame_time(ii_f-1);
-                    tracks(tid).centroids = lr_cent;
-                    tracks(tid).bbs = lr_bb;
+                    mov_tracks(tid).frame_idxs = ii_f-1;
+                    mov_tracks(tid).region_idxs = ii_lr;
+                    mov_tracks(tid).times = frame_time(ii_f-1);
+                    mov_tracks(tid).centroids = lr_cent;
+                    mov_tracks(tid).bbs = lr_bb;
                     text(lr_cent(1),lr_cent(2),sprintf("%d",tid));
                     track_traces{tid} = plot(lr_cent(1),lr_cent(2));
                 end
                 % assign track to region
                 region_tracks{ii_f}(ii_tr) = tid;
-                tracks(tid).frame_idxs = [tracks(tid).frame_idxs; ii_f];
-                tracks(tid).region_idxs = [tracks(tid).region_idxs; ii_tr];
-                tracks(tid).times = [tracks(tid).times; frame_time(ii_f)];
-                tracks(tid).centroids = [tracks(tid).centroids; tr_cent];
-                tracks(tid).bbs = [tracks(tid).bbs; tr_bb];
+                mov_tracks(tid).frame_idxs = [mov_tracks(tid).frame_idxs; ii_f];
+                mov_tracks(tid).region_idxs = [mov_tracks(tid).region_idxs; ii_tr];
+                mov_tracks(tid).times = [mov_tracks(tid).times; frame_time(ii_f)];
+                mov_tracks(tid).centroids = [mov_tracks(tid).centroids; tr_cent];
+                mov_tracks(tid).bbs = [mov_tracks(tid).bbs; tr_bb];
                 track_traces{tid}.XData = [track_traces{tid}.XData, tr_cent(1)];
                 track_traces{tid}.YData = [track_traces{tid}.YData, tr_cent(2)];
 
@@ -353,12 +365,12 @@ end
 %     pause(0.001)
 % end
 
-%%
+%% plot close up of longest track
 
 ii_max = 1;
 l_max = 0;
-for ii_t=1:size(tracks,2)
-    l = size(tracks(ii_t).frame_idxs,1);
+for ii_t=1:size(mov_tracks,2)
+    l = size(mov_tracks(ii_t).frame_idxs,1);
     if l>l_max
         ii_max=ii_t;
         l_max=l;
@@ -369,25 +381,54 @@ figure(3); clf;
 ii_t = ii_max;
 padding = [120,60];
 
-for ii_f=1:size(tracks(ii_t).frame_idxs,1)
-    cent = tracks(ii_t).centroids(ii_f,:);
+for ii_f=1:size(mov_tracks(ii_t).frame_idxs,1)
+    cent = mov_tracks(ii_t).centroids(ii_f,:);
     yidx = max(1,floor(cent(2)-padding(2)/2)):min(size(vid_cdata,1), cent(2)+padding(2)/2);
     xidx = max(1,floor(cent(1)-padding(1)/2)):min(size(vid_cdata,2), cent(1)+padding(1)/2);
     imshow(vid_cdata(...
         yidx, ...
         xidx, ...
         :, ...
-        tracks(ii_t).frame_idxs(ii_f)...
+        mov_tracks(ii_t).frame_idxs(ii_f)...
     ), 'InitialMagnification',2000,'Interpolation',"bilinear")
     hold on;
-    title(string(frame_time(tracks(ii_t).frame_idxs(ii_f))))
+    title(string(frame_time(mov_tracks(ii_t).frame_idxs(ii_f))))
     
-    if ii_f<size(tracks(ii_t).frame_idxs,1)
-        pa = frame_time(tracks(ii_t).frame_idxs(ii_f+1))-frame_time(tracks(ii_t).frame_idxs(ii_f));
+    if ii_f<size(mov_tracks(ii_t).frame_idxs,1)
+        pa = frame_time(mov_tracks(ii_t).frame_idxs(ii_f+1))-frame_time(mov_tracks(ii_t).frame_idxs(ii_f));
         pa = seconds(pa);
     end
     pause(pa)
 end
+
+%% plot stats across all tracks with time
+figure(4); clf;
+subplot(5,1,1); hold on; ylabel('BB Area');
+subplot(5,1,2); hold on; ylabel('BB Width');
+subplot(5,1,3); hold on; ylabel('BB Height');
+subplot(5,1,4); hold on; ylabel('Centroid X');
+subplot(5,1,5); hold on; ylabel('Centroid Y');
+xlabel('Time')
+for ii_t=1:size(mov_tracks,2)
+    t = mov_tracks(ii_t).times;
+    cent = mov_tracks(ii_t).centroids;
+    bbs = mov_tracks(ii_t).bbs;
+    subplot(5,1,1)
+    plot(t, bbs(:,3).*bb(:,4),'DisplayName',sprintf("%d",ii_t));
+    subplot(5,1,2)
+    plot(t, bbs(:,3),'DisplayName',sprintf("%d",ii_t));
+    subplot(5,1,3)
+    plot(t, bbs(:,4),'DisplayName',sprintf("%d",ii_t));
+    subplot(5,1,4)
+    plot(t, cent(:,1),'DisplayName',sprintf("%d",ii_t));
+    subplot(5,1,5)
+    plot(t, cent(:,2),'DisplayName',sprintf("%d",ii_t));
+end
+
+subplot(5,1,1)
+legend()
+
+%% should try to associate tracks here
 
 %%
 function ts = get_mp4_creation_time(fname)
