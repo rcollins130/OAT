@@ -56,7 +56,7 @@ clear
 %     ); 
 
 fname = 'data/movie/20230320_203920.mp4';
-[vid_cdata, t, vidObj] = load_video( ...
+[vid_cdata, frame_time, vidObj] = load_video( ...
     fname, ...
     [1,30], ...
     [94, 1878; 482, 856],...
@@ -64,8 +64,8 @@ fname = 'data/movie/20230320_203920.mp4';
     1 ...
     ); 
 
-ts = get_mp4_creation_time(fname);
-frame_time = ts+t;
+% ts = get_mp4_creation_time(fname);
+% frame_time = ts+t;
 whos vid_cdata
 
 %%
