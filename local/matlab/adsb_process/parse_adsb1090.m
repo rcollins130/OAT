@@ -7,7 +7,15 @@
 %   the adsb1090 library. adsb1090 already has good CPR location algos 
 %   (this implementation is copied from there) and can parse many more
 %   types of messages.
-function tracks = parse_adsb1090(lines, par)
+function tracks = parse_adsb1090(data, rawlines)
+    arguments
+        data 
+        rawlines (1,1) double = 0
+    end
+    if ~rawlines
+        data = readlines(data);
+    end
+
     % Parameters and constants
     ESQT_POS = 11;
     ESQT_VEL = 19;
@@ -16,8 +24,8 @@ function tracks = parse_adsb1090(lines, par)
     % Group Provided Lines into messages
     raw_m = {};
     this_m = {};
-    for ii=1:length(lines)
-        test_str = lines(ii);
+    for ii=1:length(data)
+        test_str = data(ii);
         
         % on newline, append this_m to raw_m
         if test_str==""

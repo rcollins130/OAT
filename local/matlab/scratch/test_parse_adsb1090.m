@@ -1,10 +1,12 @@
 
-fname = 'data/adsb/20230320_203920.adsb';
-rawdata = readlines(fname);
-
-adsb_tracks = parse_adsb1090(rawdata);
+fidx = '20230317_145402';
+fname = sprintf('data/adsb/%s.adsb',fidx);
+%rawdata = readlines(fname);
+adsb_toi = 3;
+adsb_tracks = parse_adsb1090(fname);
 
 home = [37.57429, -122.35051];
+ft2m = .3048;
 
 figure(11); clf; hold on
 x_c = cos(0:pi/10:2*pi)/60;
@@ -53,10 +55,34 @@ ylim([min_lat-1/2, max_lat+1/2])
 xlabel('lon')
 ylabel('lat')
 zlabel('alt, ft')
-legend([co, ho, tp])
+pbaspect([1,1,1/(deg2km(1)*1000*ft2m)])
+saveas(gcf, sprintf("media/%s_adsb_global.png",fidx))
+
+% os =[0.5,0.5];
+% xlim([home(2)-os(2), home(2)+os(2)])
+% ylim([home(1)-os(1), home(1)+os(1)])
+% pbaspect([1,1,0.25])
+% legend([co, ho, tp])
+% view([-45, 30])
+% % ft/deg = km/deg * m/km * ft/m
+% 
+% v = VideoWriter(sprintf("media/%s_adsb_local.mp4", fidx),'MPEG-4');
+% loops = 1;
+% min_az = -45;
+% max_az = 180;
+% step=1;
+% azs = repmat([min_az:step:max_az, max_az:-step:min_az],1, loops);
+% open(v);
+% for az=azs
+%     view([az, 15])
+%     frame = getframe(gcf);
+%     writeVideo(v,frame)
+% end
+% 
+% close(v);
 
 figure(12); clf
-ii_ts = [5,11];
+ii_ts = [adsb_toi];
 for ii_t = ii_ts
 subplot(3,1,1); hold on
 plot(adsb_tracks(ii_t).alt_t, adsb_tracks(ii_t).alt(:,1),"DisplayName",sprintf("%s // icao %s",adsb_tracks(ii_t).id, adsb_tracks(ii_t).icao))
@@ -77,3 +103,14 @@ ylabel('Lat')
 
 subplot(3,1,3)
 ylabel('Lon')
+
+adsb_toi_t = adsb_tracks(adsb_toi).pos_t;
+adsb_toi_az = zeros(size(adsb_toi_t));
+adsb_toi_arclen = zeros(size(adsb_toi_t));
+
+wgs84 = wgs84Ellipsoid("meter");
+for ii = 1:size(adsb_toi_t,1)
+[adsb_toi_arclen(ii), adsb_toi_az(ii)] = distance( ...
+    home,adsb_tracks(adsb_toi).pos(ii,:),wgs84 ...
+);
+end
