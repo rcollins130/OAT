@@ -1,6 +1,19 @@
-function plot_regions(ax, vid_cdata, vid_times, regions)
+function plot_regions(ax, vid_cdata, vid_times, regions, saveto)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
+
+arguments 
+    ax
+    vid_cdata
+    vid_times
+    regions
+    saveto = []
+end
+
+if ~isempty(saveto)
+    v = VideoWriter(saveto, 'MPEG-4');
+    open(v)
+end    
 
 if isempty(ax)
     im = imshow(vid_cdata(:,:,:,1));
@@ -34,6 +47,15 @@ for ii_f = 1:size(vid_cdata ,4)
     end
 
     drawnow()
+
+    if ~isempty(saveto)
+        frame = getframe(gcf);
+        writeVideo(v, frame)
+    end
+end
+
+if ~isempty(saveto)
+    close(v)
 end
 
 end

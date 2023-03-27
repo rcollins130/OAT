@@ -1,6 +1,19 @@
-function plot_track_formation(ax, vid_cdata, vid_times, tracks)
+function plot_track_formation(ax, vid_cdata, vid_times, tracks, saveto)
 %PLOT_TRACK_FORMATION Summary of this function goes here
 %   Detailed explanation goes here
+
+arguments 
+    ax
+    vid_cdata
+    vid_times
+    tracks
+    saveto = []
+end
+
+if ~isempty(saveto)
+    v = VideoWriter(saveto, 'MPEG-4');
+    open(v)
+end  
 
 if isempty(ax)
     im = imshow(vid_cdata(:,:,:,1));
@@ -67,6 +80,14 @@ for ii_f=2:size(vid_cdata, 4)
 
     end
     drawnow
+    if ~isempty(saveto)
+        frame = getframe(gcf);
+        writeVideo(v, frame)
+    end
+end
+
+if ~isempty(saveto)
+    close(v)
 end
 
 end
