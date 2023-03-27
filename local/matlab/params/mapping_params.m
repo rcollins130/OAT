@@ -1,5 +1,5 @@
 
-function mapping = mapping_params()
+function mapping = mapping_params(~)
 % Geographic parameters
 %   Note these are grabbed from Google Earth KML files, which use lon/lat coords
 mapping.camera_geo_pos = [-122.3504544996347,37.574338523816];

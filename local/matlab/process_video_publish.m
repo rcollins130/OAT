@@ -166,6 +166,13 @@ vt_az = -(vt_x-tree_x)*deg_per_x + home_tree;
 %   - convert ads-b locations to azimuth rel2 home
 %   - stack on top- 
 %       - NOTE! timing is critical - use plane passing tree to correlate?
+% 
+% from presentation:
+% do velocity measurements based on plane length - 
+% look at known length, and "plane lengths per frame" -> aircraft velocity
+%
+% Try if/and filters for birds: direction, size, periodicity of bb
+%
 
 %% Filter Individual ROIs
 % size filtering

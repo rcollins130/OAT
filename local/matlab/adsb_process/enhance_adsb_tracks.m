@@ -50,7 +50,7 @@ function enhanced_tracks = enhance_adsb_tracks(raw_tracks, icao_table, dimension
         if ~isempty(enhanced_tracks(ii_t).typedata)
             dim_idx = find(dimension_table.typecode == enhanced_tracks(ii_t).typedata.typecode,1);
             if ~isempty(dim_idx)
-                enhanced_tracks.aircraft_dimensions = table2struct(icao_table(icao_idx,2:4));
+                enhanced_tracks.aircraft_dimensions = table2struct(dimension_table(dim_idx,2:4));
             else
                 warning("Could not find typecode '%s' in dimension_table", enhanced_tracks(ii_t).typedata.typecode);
                 disp("try: https://skybrary.aero/aircraft/%s", enhanced_tracks(ii_t).typedata.typecode);

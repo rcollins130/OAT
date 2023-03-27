@@ -7,6 +7,7 @@ f{2,1} = {};
 ii_ft = 1;
 filtered_tracks = struct(f{:});
 
+% filter video tracks by length (# of frames)
 for ii_t = 1:size(vid_tracks, 2)
     if size(vid_tracks(ii_t).frame_idxs,1)>= video_tracking.track_filter_length
         filtered_tracks(ii_ft) = vid_tracks(ii_t);
