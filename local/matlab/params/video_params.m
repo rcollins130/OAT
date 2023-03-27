@@ -26,20 +26,108 @@ video_process.binarize_percolor_obin_thold = 0.1;
 video_process.filter_regions_by_area = 0;
 video_process.filter_regions_area_scale = 0.1;
 video_process.region_overlap_method = 'bounding_box_overlap';
-video_process.track_filter_length = 30;
+video_process.track_filter_method = 'longest';
+video_process.track_filter_frame_length = 30;
+video_process.track_filter_manual_idxs = [];
 
 video_process.consolidation_method = '';
-video_process.manual_consolidation = {[1,2]};
+video_process.manual_consolidation = {};
 
 % record-specific parmameters
 if record=="20230317_145402"
-    video_process.time_offset = duration(1,5,17); 
+    video_process.time_offset = -duration(1,5,13); 
     video_process.time_interval = [8,18];
     video_process.binarize_percolor_obin_thold = 0.25;
 
+    video_process.track_filter_method = 'manual';
+    video_process.track_filter_manual_idxs = [14];
+
+    video_process.consolidation_method = '';
+
 elseif record == "20230321_162848"
-    video_process.time_interval = [25, 50];
+    video_process.frame_downsample = 2;
+
+    video_process.time_interval = [26, 45];
     video_process.binarize_percolor_obin_thold = 0.1;
+
+    video_process.track_filter_method = 'manual';
+    video_process.track_filter_manual_idxs = [1];
+
+elseif record == "20230321_194339"
+    video_process.frame_downsample = 2;
+
+    video_process.time_interval = [10, 29];
+    video_process.binarize_percolor_obin_thold = 0.25;
+    video_process.binarize_percolor_open_r = 0;
+
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230321_194950"
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [1, 15];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.binarize_percolor_open_r = 0;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230321_195551"
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [5, 22];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.binarize_percolor_open_r = 0;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230321_200127"
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [10, 27];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.binarize_percolor_open_r = 0;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230321_200549"
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [23, 47];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_142550"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [6, 15];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_162225"
+    video_process.time_offset = -duration(8,0,0); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [10, 26];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_155502"
+    video_process.time_offset = -duration(8,0,0); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [11, 21];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_155108"
+    video_process.time_offset = -duration(8,0,0); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [11, 28];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230320_203920"
+    video_process.frame_downsample = 1 ;
+    video_process.time_interval = [22, 27];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230320_230902"
+    video_process.frame_downsample = 1 ;
+    video_process.time_interval = [10, 41];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
 
 elseif record == "20230317_190613"
     video_process.time_interval = [8, 18];

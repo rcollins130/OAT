@@ -1,5 +1,5 @@
 
-function mapping = mapping_params(~)
+function mapping = mapping_params(record)
 % Geographic parameters
 %   Note these are grabbed from Google Earth KML files, which use lon/lat coords
 mapping.camera_geo_pos = [-122.3504544996347,37.574338523816];
@@ -26,4 +26,22 @@ mapping.geo_domain_poly = geopolyshape( ...
 mapping.geo_alt_lims_ft = [
     0, 6000
 ];
+
+
+mapping.pole1_frame_pos = [];
+mapping.pole2_frame_pos = [];
+mapping.pole3_frame_pos = [];
+mapping.tree1_frame_pos = [];
+mapping.tree2_frame_pos = [];
+mapping.tree3_frame_pos = [];
+mapping.crane_frame_pos = [];
+
+if record == "20230317_145402"
+    mapping.pole2_frame_pos = [1362 774];
+    mapping.pole3_frame_pos = [516 872];
+    mapping.tree1_frame_pos = [207 372];
+else
+    
+end
+
 end

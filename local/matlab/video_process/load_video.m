@@ -1,7 +1,7 @@
 
 
 
-function [vid_cdata, vid_t, vidObj] = load_video(filepath, time_interval, crop_limits, spatial_downsample, frame_downsample, load_grayscale)
+function [vid_cdata, vid_t, vidObj] = load_video(filepath, time_interval, crop_limits, spatial_downsample, frame_downsample, load_grayscale, time_offset)
 %%
 %
 % filename 
@@ -18,6 +18,7 @@ arguments
     spatial_downsample (1,1) double = 1
     frame_downsample (1,1) double = 1
     load_grayscale (1,1) double = 0
+    time_offset duration = 0
 end
 
 vidObj = VideoReader(filepath);
@@ -81,6 +82,8 @@ vid_t = vid_t(1:ii_out-1);
 % Shift video time using creation time from mp4 file
 ts = get_mp4_creation_time(filepath);
 vid_t = vid_t+ts;
+
+vid_t = vid_t+time_offset;
 
 end
 
