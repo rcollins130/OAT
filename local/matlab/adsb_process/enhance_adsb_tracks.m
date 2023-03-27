@@ -1,4 +1,4 @@
-function enhanced_tracks = enhance_adsb_tracks(raw_tracks, icao_table, dimension_table, adsb_process)
+function enhanced_tracks = enhance_adsb_tracks(raw_tracks, icao_table, dimension_table, mapping)
 %ENHANCE_ADSB_TRACKS Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -11,8 +11,7 @@ function enhanced_tracks = enhance_adsb_tracks(raw_tracks, icao_table, dimension
         "pos",[], ...
         "alt_t",[], ...
         "alt", [], ...
-        "angular_t", [],...
-        "angular_pos", [],...
+        "azi", [],...
         "vel_t", [], ...
         "vel",[] ...
         );
@@ -29,11 +28,18 @@ function enhanced_tracks = enhance_adsb_tracks(raw_tracks, icao_table, dimension
         enhanced_tracks(ii_t).vel_t = raw_tracks(ii_t).vel_t;
         enhanced_tracks(ii_t).vel = raw_tracks(ii_t).vel;
 
-        %% get angular position of aircraft 
-        % TODO
+        %% get azimuthal position of aircraft
+        wgs84 = wgs84Ellipsoid("meter");
+        cam_pt = [mapping.camera_geo_pos(2), mapping.camera_geo_pos(1)];
+
+        enhanced_tracks(ii_t).azi = distance( ...
+            repmat(cam_pt,[size(enhanced_tracks(ii_t).pos,1),1]), ...
+            enhanced_tracks(ii_t).pos, ...
+            wgs84 ...
+        );
 
         %% get aircraft type
-        icao_idx = find(icao_table.icao24 == enhanced_tracks(ii_t).icao);
+        icao_idx = find(icao_table.icao24 == enhanced_tracks(ii_t).icao,1);
         if ~isempty(icao_idx)
             enhanced_tracks.typedata = table2struct(icao_table(icao_idx,:));
         else
@@ -42,7 +48,7 @@ function enhanced_tracks = enhance_adsb_tracks(raw_tracks, icao_table, dimension
         
         %% get aircraft dimensions
         if ~isempty(enhanced_tracks(ii_t).typedata)
-            dim_idx = find(dimension_table.typecode == enhanced_tracks(ii_t).typedata.typecode);
+            dim_idx = find(dimension_table.typecode == enhanced_tracks(ii_t).typedata.typecode,1);
             if ~isempty(dim_idx)
                 enhanced_tracks.aircraft_dimensions = table2struct(icao_table(icao_idx,2:4));
             else

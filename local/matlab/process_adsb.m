@@ -28,6 +28,6 @@ all_adsb_tracks = parse_adsb1090(fname);
 adsb_tracks = filter_adsb_tracks(all_adsb_tracks, par.adsb_process, par.mapping);
 
 %% Add Enhancement Data to Tracks of Interest
-adsb_tracks = enhance_adsb_tracks(adsb_tracks, icao_table, dim_table);
+adsb_tracks = enhance_adsb_tracks(adsb_tracks, icao_table, dim_table, par.mapping);
 
 %% Return adsb_tracks
