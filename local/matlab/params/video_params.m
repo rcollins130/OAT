@@ -96,19 +96,98 @@ elseif record == "20230322_142550"
     video_process.binarize_percolor_obin_thold = 0.1;
     video_process.track_filter_method = 'longest';
 
-elseif record == "20230322_162225"
-    video_process.time_offset = -duration(8,0,0); 
+elseif record == "20230322_150057"
+    video_process.time_offset = -duration(8,0,6); 
     video_process.frame_downsample = 2;
-    video_process.time_interval = [10, 26];
+    video_process.time_interval = [15, 36];
     video_process.binarize_percolor_obin_thold = 0.1;
     video_process.track_filter_method = 'longest';
 
-elseif record == "20230322_155502"
-    video_process.time_offset = -duration(8,0,0); 
+elseif record == "20230322_151255"
+    video_process.time_offset = -duration(8,0,6); 
     video_process.frame_downsample = 2;
-    video_process.time_interval = [11, 21];
+    video_process.time_interval = [0, 19];
     video_process.binarize_percolor_obin_thold = 0.1;
     video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_151422"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [17, 27];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_152037"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [8, 25];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_152805"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [18, 29];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_153053"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [7, 20];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+    
+elseif record == "20230322_153437"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [12, 27];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_153924"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [4, 25];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_154324"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [8, 31];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_154557"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [8, 25];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_154747"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [12, 29];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_155935"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [8, 28];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+
+elseif record == "20230322_152347"
+    video_process.time_offset = -duration(8,0,6); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [0, 22];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
 
 elseif record == "20230322_155108"
     video_process.time_offset = -duration(8,0,0); 
@@ -116,6 +195,22 @@ elseif record == "20230322_155108"
     video_process.time_interval = [11, 28];
     video_process.binarize_percolor_obin_thold = 0.1;
     video_process.track_filter_method = 'longest';
+    
+elseif record == "20230322_155502"
+    video_process.time_offset = -duration(8,0,0); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [11, 21];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+elseif record == "20230322_162225"
+    video_process.time_offset = -duration(8,0,0); 
+    video_process.frame_downsample = 2;
+    video_process.time_interval = [10, 26];
+    video_process.binarize_percolor_obin_thold = 0.1;
+    video_process.track_filter_method = 'longest';
+
+
 
 elseif record == "20230320_203920"
     video_process.frame_downsample = 1 ;
@@ -134,9 +229,7 @@ elseif record == "20230317_190613"
     video_process.crop_limits = [40, 1400; 325, 950];
     video_process.binarize_percolor_obin_thold = 0.1;
 
-elseif record == "20230322_152347"
-    video_process.time_interval = [0,22];
-    video_process.binarize_percolor_obin_thold = 0.25;
+
 
 else
     warning("No custom video parameters for %s, using defaults", record)

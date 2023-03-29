@@ -18,7 +18,7 @@ arguments
     spatial_downsample (1,1) double = 1
     frame_downsample (1,1) double = 1
     load_grayscale (1,1) double = 0
-    time_offset duration = 0
+    time_offset duration = seconds(0)
 end
 
 vidObj = VideoReader(filepath);
